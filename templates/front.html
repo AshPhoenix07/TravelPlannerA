@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wandr — AI Travel Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #43e97b 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      padding: 40px 20px 80px;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hero { text-align: center; margin-bottom: 40px; color: white; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: 56px; letter-spacing: 2px; text-shadow: 0 2px 20px rgba(0,0,0,0.2); }
+    .hero p { font-size: 17px; font-weight: 300; opacity: 0.9; margin-top: 8px; letter-spacing: 1px; }
+
+    .card {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 36px 40px;
+      max-width: 720px;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+
+    .card-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #6c3fc5; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #ede9fe; }
+
+    label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 12px 16px; font-size: 15px; font-family: 'Poppins', sans-serif;
+      border: 1.5px solid #e0d9f7; border-radius: 12px; margin-bottom: 20px;
+      background: #fdfcff; color: #333; transition: border-color 0.2s; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #a78bfa; background: #fff; }
+    textarea { resize: vertical; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .emergency-box { background: linear-gradient(135deg, #fff7ed, #fef3c7); border: 1.5px solid #fbbf24; border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; }
+    .emergency-box .emergency-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .emergency-badge { background: #f59e0b; color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .emergency-box p { font-size: 13px; color: #92400e; margin-bottom: 14px; line-height: 1.5; }
+    .emergency-box label { color: #92400e; }
+    .emergency-box input { border-color: #fcd34d; background: #fffbeb; margin-bottom: 0; }
+
+    .budget-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .budget-option { border: 1.5px solid #e0d9f7; border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fdfcff; }
+    .budget-option:hover { border-color: #a78bfa; background: #f5f3ff; }
+    .budget-option.selected { border-color: #7c3aed; background: #ede9fe; }
+    .budget-option .amount { font-size: 13px; font-weight: 600; color: #6c3fc5; }
+    .budget-option .label { font-size: 11px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="hidden"] { display: none; }
+
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .chip-label { display: flex; align-items: center; gap: 6px; background: #fdfcff; border: 1.5px solid #e0d9f7; border-radius: 99px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: #555; cursor: pointer; transition: all 0.2s; text-transform: none; letter-spacing: 0; }
+    .chip-label:hover { border-color: #a78bfa; background: #f5f3ff; }
+    .chip-label input[type="checkbox"] { width: auto; margin: 0; padding: 0; margin-bottom: 0; accent-color: #7c3aed; }
+
+    .submit-btn { display: block; width: 100%; max-width: 720px; margin: 0 auto; padding: 18px; font-family: 'Playfair Display', serif; font-size: 20px; color: white; background: linear-gradient(135deg, #7c3aed, #4f46e5); border: none; border-radius: 16px; cursor: pointer; letter-spacing: 1px; box-shadow: 0 4px 20px rgba(124,58,237,0.4); transition: transform 0.15s, box-shadow 0.15s; }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,0.5); }
+
+    #loading { text-align: center; color: white; font-size: 16px; margin-top: 30px; font-style: italic; opacity: 0.9; display: none; }
+
+    /* Results */
+    #results-page { display: none; padding: 40px 20px 80px; }
+    .results-hero { text-align: center; color: white; margin-bottom: 40px; }
+    .results-hero h2 { font-family: 'Playfair Display', serif; font-size: 42px; text-shadow: 0 2px 20px rgba(0,0,0,0.2); }
+    .results-hero p { font-size: 15px; font-weight: 300; opacity: 0.85; margin-top: 8px; }
+
+    .destination-card { background: rgba(255,255,255,0.97); border-radius: 24px; padding: 36px 40px; max-width: 720px; margin: 0 auto 28px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+
+    .dest-rank { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #a78bfa; margin-bottom: 8px; }
+    .dest-name { font-family: 'Playfair Display', serif; font-size: 30px; color: #1e1b4b; margin-bottom: 6px; line-height: 1.3; }
+    .dest-trip-name { font-size: 15px; color: #7c3aed; font-style: italic; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; margin-bottom: 20px; }
+    .why-box { background: #f5f3ff; border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; padding: 14px 18px; font-size: 14px; color: #444; line-height: 1.8; margin-bottom: 24px; }
+
+    .section-title { font-family: 'Playfair Display', serif; font-size: 17px; color: #4c1d95; border-bottom: 1.5px solid #ede9fe; padding-bottom: 6px; margin: 24px 0 14px; }
+
+    .day-block { background: #fdfcff; border: 1px solid #e0d9f7; border-radius: 14px; padding: 18px 22px; margin-bottom: 14px; }
+    .day-heading { font-family: 'Playfair Display', serif; font-size: 16px; color: #4c1d95; margin-bottom: 14px; font-weight: 700; }
+    .time-row { margin-bottom: 10px; }
+    .time-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #7c3aed; text-decoration: underline; text-underline-offset: 2px; margin-bottom: 3px; }
+    .time-content { font-size: 14px; color: #444; line-height: 1.7; padding-left: 2px; }
+
+    .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+    .cost-item { background: #f5f3ff; border-radius: 12px; padding: 14px; text-align: center; }
+    .cost-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 6px; }
+    .cost-amount { font-size: 15px; font-weight: 600; color: #6c3fc5; }
+
+    .packing-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .packing-item { background: #ede9fe; color: #4c1d95; font-size: 13px; padding: 5px 14px; border-radius: 99px; }
+
+    .season-box { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #78350f; line-height: 1.7; }
+    .weather-box { background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #0c4a6e; line-height: 1.7; }
+
+    .map-embed { width: 100%; height: 280px; border-radius: 14px; border: none; margin-top: 4px; }
+
+    .pick-btn { width: 100%; margin-top: 20px; padding: 14px; font-family: 'Playfair Display', serif; font-size: 16px; color: white; background: linear-gradient(135deg, #7c3aed, #4f46e5); border: none; border-radius: 14px; cursor: pointer; letter-spacing: 0.5px; transition: transform 0.15s; }
+    .pick-btn:hover { transform: translateY(-2px); }
+
+    .regen-btn { display: block; width: 100%; max-width: 720px; margin: 0 auto 16px; padding: 14px; font-family: 'Poppins', sans-serif; font-size: 15px; color: white; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 16px; cursor: pointer; text-align: center; transition: background 0.2s; }
+    .regen-btn:hover { background: rgba(255,255,255,0.25); }
+
+    .back-btn { display: block; width: 100%; max-width: 720px; margin: 0 auto 16px; padding: 14px; font-family: 'Poppins', sans-serif; font-size: 15px; color: white; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3); border-radius: 16px; cursor: pointer; text-align: center; transition: background 0.2s; }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* Deep dive page */
+    #deepdive-page { display: none; padding: 40px 20px 80px; }
+    .deepdive-card { background: rgba(255,255,255,0.97); border-radius: 24px; padding: 36px 40px; max-width: 720px; margin: 0 auto 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+    .deepdive-title { font-family: 'Playfair Display', serif; font-size: 34px; color: #1e1b4b; margin-bottom: 24px; }
+    .tip-item { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 12px 16px; font-size: 14px; color: #14532d; margin-bottom: 8px; line-height: 1.6; }
+    .restaurant-item { background: #fdfcff; border: 1px solid #e0d9f7; border-radius: 12px; padding: 14px 18px; margin-bottom: 8px; }
+    .restaurant-name { font-weight: 600; color: #4c1d95; font-size: 14px; margin-bottom: 3px; }
+    .restaurant-desc { font-size: 13px; color: #666; line-height: 1.5; }
+    .hotel-item { background: #fef9ee; border: 1px solid #fbbf24; border-radius: 12px; padding: 14px 18px; margin-bottom: 8px; }
+    .hotel-name { font-weight: 600; color: #78350f; font-size: 14px; margin-bottom: 3px; }
+    .hotel-desc { font-size: 13px; color: #92400e; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- FORM PAGE -->
+  <div id="form-page">
+    <div class="hero">
+      <h1>Wandr</h1>
+      <p>Your AI-powered travel planner — tell us what you want, we'll handle the rest.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Budget</div>
+      <div class="budget-options">
+        <div class="budget-option" onclick="selectBudget('low', this)"><div class="amount">Under $300</div><div class="label">Low</div></div>
+        <div class="budget-option selected" onclick="selectBudget('medium', this)"><div class="amount">$300 – $1K</div><div class="label">Medium</div></div>
+        <div class="budget-option" onclick="selectBudget('high', this)"><div class="amount">$1K+</div><div class="label">High</div></div>
+      </div>
+      <input type="hidden" id="budget" value="medium">
+      <div class="emergency-box">
+        <div class="emergency-header">
+          <span class="emergency-badge">Emergency mode</span>
+          <span style="font-size:13px;color:#92400e;font-weight:500">Tight on cash?</span>
+        </div>
+        <p>Working with a very tight budget? Enter your exact amount and we'll find ultra-affordable options.</p>
+        <label>My total budget for this trip is</label>
+        <input type="text" id="emergency_budget" placeholder="e.g. $50, $80 — leave blank if not applicable">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Travel details</div>
+      <label>Transport type (select all that apply)</label>
+      <div class="chip-wrap" id="transport-options">
+        <label class="chip-label"><input type="checkbox" value="road trip"> Road trip</label>
+        <label class="chip-label"><input type="checkbox" value="flight"> Flight</label>
+        <label class="chip-label"><input type="checkbox" value="train"> Train</label>
+        <label class="chip-label"><input type="checkbox" value="boat"> Boat</label>
+        <label class="chip-label"><input type="checkbox" value="public transport only"> Public transport only</label>
+        <label class="chip-label"><input type="checkbox" value="other"> Other</label>
+      </div>
+      <div id="other-transport-box" style="display:none;margin-bottom:20px;">
+        <input type="text" id="other_transport" placeholder="Describe your transport...">
+      </div>
+      <div class="two-col">
+        <div><label>Trip vibe</label><input type="text" id="vibe" placeholder="e.g. relaxing, adventurous, romantic"></div>
+        <div><label>Traveling from</label><input type="text" id="origin" placeholder="e.g. Houston, TX"></div>
+      </div>
+      <div class="two-col">
+        <div><label>Trip length</label><input type="text" id="duration" placeholder="e.g. weekend, 5 days, day trip"></div>
+        <div><label>Max travel time</label><input type="text" id="max_hours" placeholder="e.g. 4 hours"></div>
+      </div>
+      <div class="two-col">
+        <div><label>Trip scope</label><input type="text" id="scope" placeholder="e.g. in-state, international"></div>
+        <div><label>Season</label><input type="text" id="season" placeholder="e.g. summer, fall, winter"></div>
+      </div>
+      <label>Destination type</label>
+      <input type="text" id="dest_type" placeholder="e.g. beach, mountain, city, snow, surprise me">
+    </div>
+
+    <div class="card">
+      <div class="card-title">Stay & food</div>
+      <div class="two-col">
+        <div><label>Accommodation</label><input type="text" id="accommodation" placeholder="e.g. hotel, airbnb, camping"></div>
+        <div><label>Food preference</label><input type="text" id="food" placeholder="e.g. local spots, fancy, street food"></div>
+      </div>
+      <label>Favorite foods / must-eat on this trip</label>
+      <input type="text" id="fav_food" placeholder="e.g. tacos, ramen, seafood">
+      <label>Dietary restrictions</label>
+      <input type="text" id="dietary" placeholder="e.g. vegan, halal, gluten-free (or leave blank)">
+    </div>
+
+    <div class="card">
+      <div class="card-title">Your group & activities</div>
+      <div class="two-col">
+        <div><label>Group type</label><input type="text" id="group_type" placeholder="e.g. solo, couple, family, friends"></div>
+        <div><label>Group size</label><input type="text" id="group_size" placeholder="e.g. 4 people"></div>
+      </div>
+      <div class="two-col">
+        <div><label>Traveling with kids?</label><input type="text" id="kids" placeholder="yes or no"></div>
+        <div><label>Traveling with seniors?</label><input type="text" id="seniors" placeholder="yes or no"></div>
+      </div>
+      <label>Activities you enjoy</label>
+      <textarea id="activities" rows="3" placeholder="e.g. hiking, food tours, museums, nightlife, water sports"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Preferences</div>
+      <label>Must-haves</label>
+      <textarea id="must_haves" rows="2" placeholder="e.g. pool, pet-friendly, hospital nearby, WiFi"></textarea>
+      <label>Things to avoid</label>
+      <textarea id="avoid" rows="2" placeholder="e.g. crowds, heights, long walks, alcohol"></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="submitTrip()">Plan my trip</button>
+    <div id="loading">Generating your perfect trip... sit tight!</div>
+  </div>
+
+  <!-- RESULTS PAGE -->
+  <div id="results-page">
+    <button class="back-btn" onclick="goBack()">← Plan a new trip</button>
+    <button class="regen-btn" onclick="regenerateTrip()">Try different destinations</button>
+    <div class="results-hero">
+      <h2>Your trips are ready</h2>
+      <p>Here are your top 3 destinations — click one to get the full deep dive.</p>
+    </div>
+    <div id="results-container"></div>
+  </div>
+
+  <!-- DEEP DIVE PAGE -->
+  <div id="deepdive-page">
+    <button class="back-btn" onclick="goToResults()">← Back to all trips</button>
+    <div class="results-hero">
+      <h2 id="deepdive-heading">Your trip plan</h2>
+      <p>Everything you need to know for this trip.</p>
+    </div>
+    <div id="deepdive-container"></div>
+  </div>
+
+  <script>
+    let lastFormData = {};
+
+    function selectBudget(value, el) {
+      document.querySelectorAll('.budget-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('budget').value = value;
+    }
+
+    document.querySelectorAll('#transport-options input').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const otherChecked = [...document.querySelectorAll('#transport-options input:checked')].some(c => c.value === 'other');
+        document.getElementById('other-transport-box').style.display = otherChecked ? 'block' : 'none';
+      });
+    });
+
+    function getFormData() {
+      const transportChecked = [...document.querySelectorAll('#transport-options input:checked')].map(c => c.value);
+      const otherTransport = document.getElementById("other_transport").value;
+      if (transportChecked.includes("other") && otherTransport) transportChecked.push(otherTransport);
+      const emergencyBudget = document.getElementById("emergency_budget").value;
+      return {
+        budget:        emergencyBudget ? `emergency — exact budget: ${emergencyBudget}` : document.getElementById("budget").value,
+        transport:     transportChecked.join(", ") || "not specified",
+        vibe:          document.getElementById("vibe").value,
+        origin:        document.getElementById("origin").value,
+        duration:      document.getElementById("duration").value,
+        max_hours:     document.getElementById("max_hours").value,
+        scope:         document.getElementById("scope").value,
+        season:        document.getElementById("season").value,
+        dest_type:     document.getElementById("dest_type").value,
+        accommodation: document.getElementById("accommodation").value,
+        activities:    document.getElementById("activities").value,
+        food:          document.getElementById("food").value,
+        fav_food:      document.getElementById("fav_food").value,
+        dietary:       document.getElementById("dietary").value,
+        group_type:    document.getElementById("group_type").value,
+        kids:          document.getElementById("kids").value,
+        seniors:       document.getElementById("seniors").value,
+        group_size:    document.getElementById("group_size").value,
+        must_haves:    document.getElementById("must_haves").value,
+        avoid:         document.getElementById("avoid").value,
+      };
+    }
+
+    function showPage(page) {
+      document.getElementById('form-page').style.display = 'none';
+      document.getElementById('results-page').style.display = 'none';
+      document.getElementById('deepdive-page').style.display = 'none';
+      document.getElementById(page).style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    function goBack() { showPage('form-page'); }
+    function goToResults() { showPage('results-page'); }
+
+    function getField(block, label) {
+      const re = new RegExp(label + ':\\s*([^\\n]+)', 'i');
+      const m = block.match(re);
+      return m ? m[1].trim() : '';
+    }
+
+    function parseAndRender(text) {
+      const container = document.getElementById('results-container');
+      container.innerHTML = '';
+      const ranks = ['#1 Best Pick', '#2 Runner Up', '#3 Hidden Gem'];
+      const blocks = text.split(/\n?DESTINATION [123]\n?/i).filter(b => b.trim().length > 20);
+
+      if (blocks.length < 2) {
+        const card = document.createElement('div');
+        card.className = 'destination-card';
+        card.innerHTML = `<div style="white-space:pre-wrap;font-size:14px;line-height:1.8;color:#444">${text}</div>`;
+        container.appendChild(card);
+        return;
+      }
+
+      blocks.slice(0, 3).forEach((block, i) => {
+        const name = getField(block, 'Name');
+        const tripName = getField(block, 'Trip Name');
+        const whyFits = getField(block, 'Why it fits');
+
+        const dayMatches = [...block.matchAll(/Day (\d+)\s*\|?\s*([^\n]*)\nMorning:\s*([^\n]*)\nAfternoon:\s*([^\n]*)\nEvening:\s*([^\n]*)/gi)];
+
+        const transport = getField(block, 'Transport');
+        const hotel = getField(block, 'Hotel');
+        const food = getField(block, 'Food');
+        const total = getField(block, 'Total');
+
+        const packMatch = block.match(/---PACKING---\s*\n([^\n\-]+)/i);
+        const packingItems = packMatch ? packMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        const busy = getField(block, 'Busy');
+        const quiet = getField(block, 'Quiet');
+
+        const weatherMatch = block.match(/---WEATHER---\s*\n([^\n]+)/i);
+        const weather = weatherMatch ? weatherMatch[1].trim() : '';
+
+        const mapQuery = encodeURIComponent(name);
+
+        const card = document.createElement('div');
+        card.className = 'destination-card';
+        card.innerHTML = `
+          <div class="dest-rank">${ranks[i]}</div>
+          <div class="dest-name">${name || `Destination ${i + 1}`}</div>
+          ${tripName ? `<div class="dest-trip-name">"${tripName}"</div>` : ''}
+          ${whyFits ? `<div class="why-box">${whyFits}</div>` : ''}
+
+          ${dayMatches.length > 0 ? `
+            <div class="section-title">Day-by-day itinerary</div>
+            ${dayMatches.map(d => `
+              <div class="day-block">
+                <div class="day-heading">Day ${d[1]}${d[2] ? ' — ' + d[2].trim() : ''}</div>
+                <div class="time-row"><div class="time-label">Morning</div><div class="time-content">${d[3].trim()}</div></div>
+                <div class="time-row"><div class="time-label">Afternoon</div><div class="time-content">${d[4].trim()}</div></div>
+                <div class="time-row"><div class="time-label">Evening</div><div class="time-content">${d[5].trim()}</div></div>
+              </div>
+            `).join('')}
+          ` : ''}
+
+          ${(transport || hotel || food || total) ? `
+            <div class="section-title">Estimated costs</div>
+            <div class="cost-grid">
+              ${transport ? `<div class="cost-item"><div class="cost-label">Transport</div><div class="cost-amount">${transport}</div></div>` : ''}
+              ${hotel ? `<div class="cost-item"><div class="cost-label">Hotel / night</div><div class="cost-amount">${hotel}</div></div>` : ''}
+              ${food ? `<div class="cost-item"><div class="cost-label">Food / day</div><div class="cost-amount">${food}</div></div>` : ''}
+              ${total ? `<div class="cost-item"><div class="cost-label">Total</div><div class="cost-amount">${total}</div></div>` : ''}
+            </div>
+          ` : ''}
+
+          ${packingItems.length > 0 ? `
+            <div class="section-title">Packing list</div>
+            <div class="packing-list">${packingItems.map(item => `<span class="packing-item">${item}</span>`).join('')}</div>
+          ` : ''}
+
+          ${(busy || quiet) ? `
+            <div class="section-title">Busy & quiet seasons</div>
+            <div class="season-box">
+              ${busy ? `<strong>Busy:</strong> ${busy}<br>` : ''}
+              ${quiet ? `<strong>Quiet:</strong> ${quiet}` : ''}
+            </div>
+          ` : ''}
+
+          ${weather ? `
+            <div class="section-title">Weather</div>
+            <div class="weather-box">${weather}</div>
+          ` : ''}
+
+          ${name ? `
+            <div class="section-title">Map</div>
+            <iframe class="map-embed"
+              src="https://maps.google.com/maps?q=${mapQuery}&output=embed"
+              allowfullscreen loading="lazy">
+            </iframe>
+          ` : ''}
+
+          <button class="pick-btn" onclick="deepDive('${name.replace(/'/g, "\\'")}')">
+            I want this trip — show me everything
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function submitTrip() {
+      lastFormData = getFormData();
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("form-page").style.opacity = "0.6";
+      document.getElementById("form-page").style.pointerEvents = "none";
+
+      try {
+        const res = await fetch("/api/trip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(lastFormData)
+        });
+        const json = await res.json();
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("form-page").style.opacity = "1";
+        document.getElementById("form-page").style.pointerEvents = "auto";
+        showPage('results-page');
+        parseAndRender(json.reply);
+      } catch (err) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("form-page").style.opacity = "1";
+        document.getElementById("form-page").style.pointerEvents = "auto";
+        alert("Something went wrong: " + err.message);
+      }
+    }
+
+    async function regenerateTrip() {
+      const container = document.getElementById('results-container');
+      container.innerHTML = `<div style="text-align:center;color:white;font-size:16px;font-style:italic;padding:40px">Finding different destinations... sit tight!</div>`;
+
+      try {
+        const res = await fetch("/api/regenerate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(lastFormData)
+        });
+        const json = await res.json();
+        parseAndRender(json.reply);
+        window.scrollTo(0, 0);
+      } catch (err) {
+        alert("Something went wrong: " + err.message);
+      }
+    }
+
+    async function deepDive(destinationName) {
+      document.getElementById('deepdive-heading').innerText = destinationName;
+      showPage('deepdive-page');
+      document.getElementById('deepdive-container').innerHTML = `
+        <div style="text-align:center;color:white;font-size:16px;font-style:italic;padding:40px">
+          Building your full trip plan for ${destinationName}...
+        </div>`;
+
+      try {
+        const res = await fetch("/api/deep-dive", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ destination: destinationName, preferences: lastFormData })
+        });
+        const json = await res.json();
+        renderDeepDive(json.reply, destinationName);
+      } catch (err) {
+        alert("Something went wrong: " + err.message);
+      }
+    }
+
+    function renderDeepDive(text, destName) {
+      const container = document.getElementById('deepdive-container');
+      container.innerHTML = '';
+
+      const card = document.createElement('div');
+      card.className = 'deepdive-card';
+
+      const dayMatches = [...text.matchAll(/Day (\d+)\s*\|?\s*([^\n]*)\nMorning:\s*([^\n]*)\nAfternoon:\s*([^\n]*)\nEvening:\s*([^\n]*)/gi)];
+
+      const restaurantMatch = text.match(/---RESTAURANTS---\n([\s\S]*?)(?=---|\n\n[A-Z]|$)/i);
+      const restaurantLines = restaurantMatch ? restaurantMatch[1].trim().split('\n').filter(Boolean) : [];
+
+      const hotelMatch = text.match(/---HOTELS---\n([\s\S]*?)(?=---|\n\n[A-Z]|$)/i);
+      const hotelLines = hotelMatch ? hotelMatch[1].trim().split('\n').filter(Boolean) : [];
+
+      const tipsMatch = text.match(/---TIPS---\n([\s\S]*?)(?=---|\n\n[A-Z]|$)/i);
+      const tipLines = tipsMatch ? tipsMatch[1].trim().split('\n').filter(Boolean) : [];
+
+      const packMatch = text.match(/---FULLPACKING---\n([^\n\-]+)/i);
+      const packingItems = packMatch ? packMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
+
+      const mapQuery = encodeURIComponent(destName);
+
+      card.innerHTML = `
+        <div class="deepdive-title">${destName}</div>
+
+        <iframe class="map-embed" style="height:320px;margin-bottom:8px"
+          src="https://maps.google.com/maps?q=${mapQuery}&output=embed"
+          allowfullscreen loading="lazy">
+        </iframe>
+
+        ${dayMatches.length > 0 ? `
+          <div class="section-title">Full itinerary</div>
+          ${dayMatches.map(d => `
+            <div class="day-block">
+              <div class="day-heading">Day ${d[1]}${d[2] ? ' — ' + d[2].trim() : ''}</div>
+              <div class="time-row"><div class="time-label">Morning</div><div class="time-content">${d[3].trim()}</div></div>
+              <div class="time-row"><div class="time-label">Afternoon</div><div class="time-content">${d[4].trim()}</div></div>
+              <div class="time-row"><div class="time-label">Evening</div><div class="time-content">${d[5].trim()}</div></div>
+            </div>
+          `).join('')}
+        ` : ''}
+
+        ${restaurantLines.length > 0 ? `
+          <div class="section-title">Where to eat</div>
+          ${restaurantLines.map(line => {
+            const parts = line.split(':');
+            const rname = parts[0].trim();
+            const rdesc = parts.slice(1).join(':').trim();
+            return `<div class="restaurant-item"><div class="restaurant-name">${rname}</div><div class="restaurant-desc">${rdesc}</div></div>`;
+          }).join('')}
+        ` : ''}
+
+        ${hotelLines.length > 0 ? `
+          <div class="section-title">Where to stay</div>
+          ${hotelLines.map(line => {
+            const parts = line.split(':');
+            const hname = parts[0].trim();
+            const hdesc = parts.slice(1).join(':').trim();
+            return `<div class="hotel-item"><div class="hotel-name">${hname}</div><div class="hotel-desc">${hdesc}</div></div>`;
+          }).join('')}
+        ` : ''}
+
+        ${tipLines.length > 0 ? `
+          <div class="section-title">Local tips</div>
+          ${tipLines.map(tip => `<div class="tip-item">${tip.replace(/^[-•]\s*/, '')}</div>`).join('')}
+        ` : ''}
+
+        ${packingItems.length > 0 ? `
+          <div class="section-title">Packing list</div>
+          <div class="packing-list">${packingItems.map(item => `<span class="packing-item">${item}</span>`).join('')}</div>
+        ` : ''}
+      `;
+
+      container.appendChild(card);
+    }
+  </script>
+
+</body>
+</html>
