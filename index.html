@@ -417,7 +417,7 @@
       document.getElementById("form-page").style.pointerEvents = "none";
 
       try {
-        const res = await fetch("/api/trip", {
+        const res = await fetch("https://travelplannera.onrender.com/api/trip", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(lastFormData)
@@ -441,7 +441,7 @@
       container.innerHTML = `<div style="text-align:center;color:white;font-size:16px;font-style:italic;padding:40px">Finding different destinations... sit tight!</div>`;
 
       try {
-        const res = await fetch("/api/regenerate", {
+        const res = await fetch("https://travelplannera.onrender.com/api/regenerate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(lastFormData)
@@ -463,7 +463,7 @@
         </div>`;
 
       try {
-        const res = await fetch("/api/deep-dive", {
+        const res = await fetch("https://travelplannera.onrender.com/api/deep-dive", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ destination: destinationName, preferences: lastFormData })
