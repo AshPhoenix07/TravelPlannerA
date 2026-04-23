@@ -1,3 +1,4 @@
+from flask_cors import CORS
 import os
 from mistralai import Mistral
 from flask import Flask, request, jsonify, render_template
@@ -6,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 @app.after_request
 def add_header(response):
