@@ -115,7 +115,7 @@ def enrich_prompt_context(data):
 
 def ask_mistral(prompt: str) -> str:
     client = Mistral(
-        api_key=os.getenv("MISTRAL_API_KEY", "pfYRNeZdpfsn1EPQe4sf9GDQFNoyi1N3"),
+        api_key=os.getenv("MISTRAL_API_KEY"),
     )
     res = client.chat.complete(
         model="mistral-large-latest",
@@ -283,7 +283,7 @@ Evening: [detailed]
 Use this format exactly. No markdown, no asterisks."""
 
     client = Mistral(
-        api_key=os.getenv("MISTRAL_API_KEY", "pfYRNeZdpfsn1EPQe4sf9GDQFNoyi1N3"),
+        api_key=os.getenv("MISTRAL_API_KEY"),
     )
     res = client.chat.complete(
         model="mistral-large-latest",
